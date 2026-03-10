@@ -48,9 +48,9 @@
     .badge.saved { background: #34c75910; color: #34c759; }
     .section-desc { font-size: 13px; color: #8e8e93; margin-bottom: 8px; }
 
-    textarea, input[type=\"text\"] { width: 100%; border: 1.5px solid #d2d2d7; border-radius: 12px; padding: 12px 14px; font-size: 14px; font-family: inherit; line-height: 1.6; transition: border-color 0.15s; background: #fafafa; }
+    textarea, input[type="text"] { width: 100%; border: 1.5px solid #d2d2d7; border-radius: 12px; padding: 12px 14px; font-size: 14px; font-family: inherit; line-height: 1.6; transition: border-color 0.15s; background: #fafafa; }
     textarea { resize: vertical; }
-    textarea:focus, input[type=\"text\"]:focus { outline: none; border-color: #0071e3; background: #fff; }
+    textarea:focus, input[type="text"]:focus { outline: none; border-color: #0071e3; background: #fff; }
     textarea::placeholder, input::placeholder { color: #c7c7cc; }
     select { width: 100%; border: 1.5px solid #d2d2d7; border-radius: 12px; padding: 12px 14px; font-size: 14px; font-family: inherit; background: #fafafa; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238e8e93' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; cursor: pointer; }
     select:focus { outline: none; border-color: #0071e3; }
@@ -180,6 +180,9 @@
     <span class="nav-title">AI 마케팅</span>
     <span class="nav-tab active" data-page="scenarios">시나리오</span>
     <span class="nav-tab" data-page="account">우리 회사</span>
+    <span style="width:1px; height:24px; background:#e8e8ed; margin:0 8px;"></span>
+    <span class="nav-tab" id="demo-scenario" style="color:#34c759;">시나리오 (설정 완료)</span>
+    <span class="nav-tab" id="demo-account" style="color:#34c759;">우리 회사 (설정 완료)</span>
   </nav>
 
   <div class="container">
@@ -414,6 +417,7 @@
   <div class="toast" id="toast"></div>
 
   <script>
+    // ── Scenario Definitions ──
     const SCENARIOS = {
       'lead-capture': {
         name: '잠재 고객 확보', icon: '\u{1F3AF}',
@@ -478,6 +482,7 @@
     let conversationStep = 0;
     let isConversationActive = false;
 
+    // ── DOM refs ──
     const knowledgeEl = document.getElementById('knowledge');
     const chatArea = document.getElementById('chat-area');
     const chatEmpty = document.getElementById('chat-empty');
@@ -494,6 +499,7 @@
     const onboardingBanner = document.getElementById('onboarding-banner');
     const toast = document.getElementById('toast');
 
+    // ── Navigation ──
     document.querySelectorAll('.nav-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -504,16 +510,22 @@
     });
 
     function navigateTo(page) {
-      document.querySelectorAll('.nav-tab').forEach(t => { t.classList.toggle('active', t.dataset.page === page); });
+      document.querySelectorAll('.nav-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.page === page);
+      });
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.getElementById(`page-${page}`).classList.add('active');
     }
 
+    // ── Account ──
     document.getElementById('go-to-account').addEventListener('click', () => navigateTo('account'));
 
     document.getElementById('btn-save-account').addEventListener('click', () => {
       const k = knowledgeEl.value.trim();
-      if (!k) { knowledgeEl.style.borderColor = '#ff3b30'; return; }
+      if (!k) {
+        knowledgeEl.style.borderColor = '#ff3b30';
+        return;
+      }
       accountSaved = true;
       onboardingBanner.classList.add('hidden');
       showToast('회사 정보가 저장되었습니다');
@@ -526,6 +538,7 @@
       setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
+    // ── Scenario Selection ──
     document.querySelectorAll('.scenario-card').forEach(card => {
       card.addEventListener('click', () => {
         if (!accountSaved && !knowledgeEl.value.trim()) {
@@ -540,12 +553,16 @@
 
     function openScenarioDetail() {
       const sc = SCENARIOS[selectedScenario];
+
       scenarioSelect.style.display = 'none';
       scenarioDetail.classList.add('active');
+
       document.getElementById('selected-scenario-label').textContent = `${sc.icon} ${sc.name}`;
       document.getElementById('campaign-card-title').textContent = sc.name;
+
       document.querySelectorAll('.campaign-content').forEach(c => c.style.display = 'none');
       document.getElementById(`campaign-${selectedScenario}`).style.display = 'block';
+
       buildTriggers(sc.triggers);
       resetConversation();
     }
@@ -556,6 +573,7 @@
       resetConversation();
     });
 
+    // ── Dynamic Triggers ──
     function buildTriggers(triggers) {
       triggerList.innerHTML = '';
       triggers.forEach(t => {
@@ -592,6 +610,7 @@
       });
     }
 
+    // ── Validation ──
     function isSetupValid() {
       const has = knowledgeEl.value.trim().length > 0;
       if (selectedScenario === 'lead-capture') return has && q('#icp');
@@ -609,6 +628,7 @@
       if (e.target.matches('textarea, input[type="text"]')) {
         e.target.style.borderColor = '#d2d2d7';
         updateStatus();
+        // Auto-detect account filled
         if (e.target.id === 'knowledge' && e.target.value.trim()) {
           accountSaved = true;
           onboardingBanner.classList.add('hidden');
@@ -616,17 +636,21 @@
       }
     });
 
+    // ── Prompt Generation ──
     function generatePrompt() {
       const sc = SCENARIOS[selectedScenario];
       const knowledge = knowledgeEl.value.trim();
       const globalOv = q('#global-overrides');
+
       let p = `## 역할\n당신은 AI 마케팅 에이전트입니다.\n\n## 시나리오: ${sc.name}\n목표: ${sc.goal}\n상태 흐름: ${sc.states}\n\n## 우리 회사 정보\n${knowledge || '(미입력)'}`;
+
       if (selectedScenario === 'lead-capture') {
         p += `\n\n## 우리가 찾는 고객\n${q('#icp') || '(미입력)'}`;
       } else if (selectedScenario === 'purchase-conversion') {
         p += `\n\n## 추천 대상\n${q('#rec-target') || '(미입력)'}`;
         p += `\n\n## 상품 정보\n${q('#rec-products') || '(미입력)'}`;
       }
+
       p += '\n\n## 활성 트리거';
       let anyTrigger = false;
       sc.triggers.forEach(t => {
@@ -639,20 +663,24 @@
         }
       });
       if (!anyTrigger) p += '\n(없음)';
+
       p += '\n\n## 전략';
       sc.strategies.forEach(s => {
         const mat = q(`#strat-${s.id}`);
         p += `\n\n### ${s.name}\n${s.instruction}`;
         if (mat) p += `\n제공 자료: ${mat}`;
       });
+
       const campOv = selectedScenario === 'lead-capture' ? q('#campaign-overrides-leadgen') : q('#campaign-overrides-rec');
       if (globalOv || campOv) { p += '\n\n## 주의사항'; if (globalOv) p += `\n[공통] ${globalOv}`; if (campOv) p += `\n[이 시나리오] ${campOv}`; }
+
       p += `\n\n## 가드레일\n- 최대 피로도: ${sc.guardrails.maxFatigue}\n- 상태별 최대 턴: ${sc.guardrails.maxTurnsPerState}\n- 타임아웃: ${sc.guardrails.timeout}`;
       p += `\n\n## 사용 가능한 도구\n${sc.tools.map(t => `- ${t}`).join('\n')}`;
       p += '\n\n## 행동 규칙\n- 자연스럽고 친근하게 대화할 것\n- 정보를 한 번에 요구하지 말고 대화 흐름 속에서 수집할 것\n- 대상이 아닌 방문자에게는 정중하게 마무리할 것\n- 가드레일 한도를 항상 준수할 것';
       return p;
     }
 
+    // ── Chat ──
     function addMessage(sender, text) {
       chatEmpty.style.display = 'none';
       const d = document.createElement('div'); d.className = `chat-message ${sender}`;
@@ -726,6 +754,66 @@
       userInput.disabled = false; btnSend.disabled = false; userInput.focus();
     }
 
+    // ── Demo Data ──
+    const DEMO = {
+      account: {
+        knowledge: '채널톡은 올인원 비즈 메신저입니다.\n주요 기능: 채팅 상담, CRM, 팀 메신저, 마케팅 자동화\n고객: B2B SaaS, 이커머스, 교육 등 다양한 업종의 온라인 비즈니스\n강점: 설치 5분, 무료 플랜 제공, 한국어 특화 AI 상담봇(ALF)',
+        overrides: '경쟁사(인터컴, 젠데스크 등)를 직접 비판하지 마세요\n무료 플랜 외의 가격 할인은 약속하지 마세요\n고객의 민감 정보(매출, 인원수 등)를 먼저 묻지 마세요'
+      },
+      'lead-capture': {
+        icp: 'CS팀 또는 마케팅팀이 있는 온라인 비즈니스\n직원 20명 이상, 월 상담량 500건 이상\n현재 이메일/전화 기반 상담을 하고 있거나, 기존 채팅 도구에 불만이 있는 회사\n의사결정권자: CS팀 리더, CX 디렉터, COO',
+        stratValueExchange: '채널톡 도입 가이드 PDF, CS 자동화 ROI 계산기, 업종별 채팅 상담 벤치마크 리포트',
+        stratCaseStudy: '이커머스 A사 — 채널톡 도입 후 첫 응답 시간 80% 감소, CS 인력 30% 절감\nSaaS B사 — 채팅 전환율 3배 증가, 고객 만족도(CSAT) 92% 달성\n교육 플랫폼 C사 — ALF 봇으로 야간 문의 70% 자동 처리',
+        stratDemo: 'https://calendly.com/channeltalk/demo',
+        overrides: '경쟁사에서 이전하려는 고객에게는 마이그레이션 지원을 언급해주세요\n엔터프라이즈 문의는 세일즈팀 미팅으로 바로 연결해주세요'
+      }
+    };
+
+    function fillAccountDemo() {
+      knowledgeEl.value = DEMO.account.knowledge;
+      document.getElementById('global-overrides').value = DEMO.account.overrides;
+      accountSaved = true;
+      onboardingBanner.classList.add('hidden');
+      navigateTo('account');
+      showToast('데모 데이터가 채워졌습니다');
+    }
+
+    function fillScenarioDemo() {
+      // Fill account first
+      knowledgeEl.value = DEMO.account.knowledge;
+      document.getElementById('global-overrides').value = DEMO.account.overrides;
+      accountSaved = true;
+      onboardingBanner.classList.add('hidden');
+
+      // Select lead-capture scenario
+      selectedScenario = 'lead-capture';
+      navigateTo('scenarios');
+      openScenarioDetail();
+
+      // Fill scenario fields
+      document.getElementById('icp').value = DEMO['lead-capture'].icp;
+      document.getElementById('strat-value-exchange').value = DEMO['lead-capture'].stratValueExchange;
+      document.getElementById('strat-case-study').value = DEMO['lead-capture'].stratCaseStudy;
+      document.getElementById('strat-demo').value = DEMO['lead-capture'].stratDemo;
+      document.getElementById('campaign-overrides-leadgen').value = DEMO['lead-capture'].overrides;
+
+      // Enable inbound trigger
+      const swInbound = document.getElementById('switch-inbound');
+      if (swInbound && !swInbound.checked) {
+        swInbound.checked = true;
+        swInbound.dispatchEvent(new Event('change'));
+      }
+      const inboundFilter = document.getElementById('trigger-inbound-filter');
+      if (inboundFilter) inboundFilter.value = '도입 상담, 가격 문의, 기능 질문';
+
+      updateStatus();
+      showToast('잠재 고객 확보 시나리오 데모 데이터가 채워졌습니다');
+    }
+
+    document.getElementById('demo-account').addEventListener('click', fillAccountDemo);
+    document.getElementById('demo-scenario').addEventListener('click', fillScenarioDemo);
+
+    // ── Events ──
     btnTest.addEventListener('click', startConversation);
     btnSend.addEventListener('click', handleUserMessage);
     userInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) handleUserMessage(); });
