@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 마케팅 설정</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f7; color: #1d1d1f; line-height: 1.5; }
+
+    /* Top nav */
+    .top-nav { background: #fff; border-bottom: 1px solid #e8e8ed; padding: 0 24px; display: flex; align-items: center; gap: 0; height: 52px; }
+    .nav-tab { padding: 14px 20px; font-size: 14px; font-weight: 600; color: #8e8e93; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+    .nav-tab:hover { color: #1d1d1f; }
+    .nav-tab.active { color: #0071e3; border-bottom-color: #0071e3; }
+    .nav-title { font-size: 15px; font-weight: 700; margin-right: 32px; color: #1d1d1f; }
+
+    .container { max-width: 1080px; margin: 0 auto; padding: 32px 24px; }
+
+    /* Page header */
+    .page-header { margin-bottom: 28px; }
+    .page-header h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .page-header p { font-size: 15px; color: #6e6e73; }
+
+    /* Account page */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* Onboarding banner */
+    .onboarding-banner { background: #fff3cd; border: 1.5px solid #ffc107; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+    .onboarding-banner.hidden { display: none; }
+    .onboarding-icon { font-size: 20px; flex-shrink: 0; }
+    .onboarding-text { font-size: 14px; color: #664d03; flex: 1; }
+    .onboarding-text strong { font-weight: 700; }
+    .onboarding-action { font-size: 13px; font-weight: 600; color: #0071e3; cursor: pointer; white-space: nowrap; }
+    .onboarding-action:hover { text-decoration: underline; }
+
+    /* Cards */
+    .card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    .card-title { font-size: 13px; font-weight: 700; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 20px; }
+    .section { margin-bottom: 22px; }
+    .section:last-child { margin-bottom: 0; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .section-header h3 { font-size: 15px; font-weight: 600; }
+    .badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+    .badge.required { background: #ff3b3010; color: #ff3b30; }
+    .badge.optional { background: #8e8e9310; color: #8e8e93; }
+    .badge.saved { background: #34c75910; color: #34c759; }
+    .section-desc { font-size: 13px; color: #8e8e93; margin-bottom: 8px; }
+
+    textarea, input[type=\"text\"] { width: 100%; border: 1.5px solid #d2d2d7; border-radius: 12px; padding: 12px 14px; font-size: 14px; font-family: inherit; line-height: 1.6; transition: border-color 0.15s; background: #fafafa; }
+    textarea { resize: vertical; }
+    textarea:focus, input[type=\"text\"]:focus { outline: none; border-color: #0071e3; background: #fff; }
+    textarea::placeholder, input::placeholder { color: #c7c7cc; }
+    select { width: 100%; border: 1.5px solid #d2d2d7; border-radius: 12px; padding: 12px 14px; font-size: 14px; font-family: inherit; background: #fafafa; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238e8e93' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; cursor: pointer; }
+    select:focus { outline: none; border-color: #0071e3; }
+
+    /* Scenario selection */
+    .scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .scenario-card { background: #fff; border: 2px solid #e8e8ed; border-radius: 16px; padding: 28px 24px; cursor: pointer; transition: all 0.2s; position: relative; }
+    .scenario-card:hover { border-color: #0071e3; box-shadow: 0 2px 12px rgba(0,113,227,0.08); }
+    .scenario-card.selected { border-color: #0071e3; background: #f8fbff; box-shadow: 0 2px 12px rgba(0,113,227,0.12); }
+    .scenario-card.selected::after { content: '\2713'; position: absolute; top: 16px; right: 16px; width: 24px; height: 24px; border-radius: 50%; background: #0071e3; color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .scenario-icon { font-size: 32px; margin-bottom: 14px; }
+    .scenario-name { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .scenario-desc { font-size: 14px; color: #6e6e73; line-height: 1.5; margin-bottom: 14px; }
+    .scenario-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .scenario-tag { font-size: 11px; padding: 3px 10px; border-radius: 10px; background: #f5f5f7; color: #8e8e93; font-weight: 600; }
+    .scenario-more { text-align: center; padding: 20px; color: #8e8e93; font-size: 13px; }
+    .scenario-more span { display: inline-block; border: 1.5px dashed #d2d2d7; border-radius: 12px; padding: 10px 20px; }
+
+    /* Setup detail */
+    .setup-detail { display: none; }
+    .setup-detail.active { display: block; }
+    .layout { display: grid; grid-template-columns: 1fr 400px; gap: 24px; align-items: start; }
+    .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #0071e3; cursor: pointer; margin-bottom: 20px; padding: 6px 0; }
+    .back-link:hover { text-decoration: underline; }
+    .scenario-summary { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; padding: 6px 14px; border-radius: 10px; background: #0071e310; color: #0071e3; font-weight: 600; margin-bottom: 20px; margin-left: 16px; }
+
+    /* Strategy cards */
+    .strategy-list { display: flex; flex-direction: column; gap: 14px; }
+    .strategy-item { border: 1.5px solid #e8e8ed; border-radius: 12px; padding: 16px; transition: border-color 0.15s; }
+    .strategy-item:hover { border-color: #d2d2d7; }
+    .strategy-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .strategy-desc { font-size: 13px; color: #8e8e93; margin-bottom: 10px; }
+    .strategy-input-label { font-size: 12px; font-weight: 600; color: #6e6e73; margin-bottom: 4px; }
+    .strategy-input-hint { font-size: 11px; color: #aeaeb2; margin-top: 4px; }
+
+    /* Trigger cards */
+    .trigger-list { display: flex; flex-direction: column; gap: 12px; }
+    .trigger-item { border: 1.5px solid #e8e8ed; border-radius: 12px; padding: 18px; transition: all 0.15s; }
+    .trigger-item:hover { border-color: #d2d2d7; }
+    .trigger-item.active { border-color: #0071e3; background: #f8fbff; }
+    .trigger-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+    .trigger-info { flex: 1; }
+    .trigger-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .trigger-desc { font-size: 13px; color: #8e8e93; }
+    .trigger-toggle { flex-shrink: 0; margin-left: 12px; }
+    .trigger-config { margin-top: 14px; padding-top: 14px; border-top: 1px solid #f0f0f0; display: none; }
+    .trigger-config.show { display: block; }
+    .trigger-config-row { margin-bottom: 10px; }
+    .trigger-config-row:last-child { margin-bottom: 0; }
+    .trigger-config-label { font-size: 12px; font-weight: 600; color: #6e6e73; margin-bottom: 4px; }
+
+    /* Toggle switch */
+    .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: #d2d2d7; border-radius: 12px; cursor: pointer; transition: background 0.2s; }
+    .toggle-slider::before { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; background: #fff; top: 2px; left: 2px; transition: transform 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+    .toggle-switch input:checked + .toggle-slider { background: #0071e3; }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* Buttons */
+    .actions { display: flex; gap: 12px; margin-top: 8px; }
+    .btn { padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+    .btn-primary { background: #0071e3; color: #fff; }
+    .btn-primary:hover { background: #0077ed; }
+    .btn-primary:disabled { background: #d2d2d7; cursor: not-allowed; }
+    .btn-secondary { background: #f5f5f7; color: #1d1d1f; border: 1.5px solid #d2d2d7; }
+    .btn-secondary:hover { background: #e8e8ed; }
+    .btn-save { background: #34c759; color: #fff; }
+    .btn-save:hover { background: #2db84e; }
+
+    /* Preview */
+    .preview-panel { background: #fff; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden; position: sticky; top: 24px; }
+    .preview-header { padding: 18px 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+    .preview-header h3 { font-size: 15px; font-weight: 600; }
+    .preview-status { font-size: 12px; padding: 4px 10px; border-radius: 10px; background: #f5f5f7; color: #8e8e93; }
+    .preview-status.ready { background: #34c75910; color: #34c759; }
+    .chat-area { height: 440px; overflow-y: auto; padding: 20px; }
+    .chat-empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #c7c7cc; text-align: center; }
+    .chat-empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .chat-empty p { font-size: 14px; }
+    .chat-message { margin-bottom: 16px; display: flex; flex-direction: column; }
+    .chat-message.ai { align-items: flex-start; }
+    .chat-message.user { align-items: flex-end; }
+    .chat-message .sender { font-size: 11px; font-weight: 600; color: #8e8e93; margin-bottom: 4px; padding: 0 4px; }
+    .chat-bubble { max-width: 85%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
+    .chat-message.ai .chat-bubble { background: #f0f0f5; border-bottom-left-radius: 4px; }
+    .chat-message.user .chat-bubble { background: #0071e3; color: #fff; border-bottom-right-radius: 4px; }
+    .chat-typing { display: flex; gap: 4px; padding: 12px 16px; align-items: center; }
+    .chat-typing span { width: 6px; height: 6px; border-radius: 50%; background: #c7c7cc; animation: typing 1.2s infinite; }
+    .chat-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .chat-typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing { 0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); } 30% { opacity: 1; transform: scale(1); } }
+    .preview-input { border-top: 1px solid #f0f0f0; padding: 14px 16px; display: flex; gap: 8px; }
+    .preview-input input { flex: 1; border: 1.5px solid #d2d2d7; border-radius: 20px; padding: 10px 16px; font-size: 14px; font-family: inherit; }
+    .preview-input input:focus { outline: none; border-color: #0071e3; }
+    .preview-input input:disabled { background: #f5f5f7; cursor: not-allowed; }
+    .send-btn { width: 38px; height: 38px; border-radius: 50%; border: none; background: #0071e3; color: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .send-btn:hover { background: #0077ed; }
+    .send-btn:disabled { background: #d2d2d7; cursor: not-allowed; }
+    .state-badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 8px; background: #f0f0f5; color: #8e8e93; margin-bottom: 12px; font-weight: 600; }
+
+    /* Modal */
+    .prompt-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+    .prompt-overlay.show { display: flex; }
+    .prompt-modal { background: #fff; border-radius: 16px; width: 90%; max-width: 680px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column; }
+    .prompt-modal-header { padding: 20px 24px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+    .prompt-modal-header h3 { font-size: 16px; font-weight: 600; }
+    .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #8e8e93; }
+    .prompt-modal-body { padding: 24px; overflow-y: auto; }
+    .prompt-modal-body pre { background: #1d1d1f; color: #f5f5f7; padding: 20px; border-radius: 12px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; font-family: 'SF Mono', 'Menlo', monospace; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1d1d1f; color: #fff; padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; opacity: 0; transition: all 0.3s; z-index: 200; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      .preview-panel { position: static; }
+      .scenario-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <nav class="top-nav">
+    <span class="nav-title">AI 마케팅</span>
+    <span class="nav-tab active" data-page="scenarios">시나리오</span>
+    <span class="nav-tab" data-page="account">우리 회사</span>
+  </nav>
+
+  <div class="container">
+
+    <!-- ==================== Account Page ==================== -->
+    <div class="page" id="page-account">
+      <div class="page-header">
+        <h2>우리 회사</h2>
+        <p>모든 시나리오에서 AI가 활용할 기본 정보입니다. 한 번 입력하면 모든 시나리오에 적용됩니다.</p>
+      </div>
+
+      <div style="max-width: 640px;">
+        <div class="card">
+          <div class="card-title">기본 정보</div>
+          <div class="section">
+            <div class="section-header">
+              <h3>회사 및 제품 소개</h3>
+              <span class="badge required">필수</span>
+            </div>
+            <p class="section-desc">AI가 방문자와 대화할 때 참고하는 핵심 정보입니다</p>
+            <textarea id="knowledge" rows="6" placeholder="예: StyleOn은 패션 쇼핑몰 전용 CS 자동화 솔루션입니다.&#10;주요 기능: 자동 응대, 주문 조회, 반품 처리&#10;강점: 패션에 특화된 CS 시나리오 200종 내장"></textarea>
+          </div>
+          <div class="section">
+            <div class="section-header">
+              <h3>공통 주의사항</h3>
+              <span class="badge optional">선택</span>
+            </div>
+            <p class="section-desc">모든 시나리오에서 AI가 항상 지켜야 할 규칙</p>
+            <textarea id="global-overrides" rows="3" placeholder="예: 경쟁사와 직접 비교하지 마세요&#10;가격 할인은 약속하지 마세요"></textarea>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-save" id="btn-save-account">저장</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== Scenarios Page ==================== -->
+    <div class="page active" id="page-scenarios">
+
+      <!-- Onboarding banner (shown when account not set up) -->
+      <div class="onboarding-banner" id="onboarding-banner">
+        <span class="onboarding-icon">&#x26A0;&#xFE0F;</span>
+        <div class="onboarding-text">
+          <strong>회사 정보를 먼저 입력해주세요.</strong> 시나리오를 설정하기 전에 AI가 참고할 기본 정보가 필요합니다.
+        </div>
+        <span class="onboarding-action" id="go-to-account">입력하러 가기 &rarr;</span>
+      </div>
+
+      <!-- Scenario selection -->
+      <div id="scenario-select" class="scenario-select">
+        <div class="page-header">
+          <h2>시나리오</h2>
+          <p>목표에 맞는 시나리오를 선택하면 AI가 최적의 전략으로 대화합니다.</p>
+        </div>
+
+        <div class="scenario-grid">
+          <div class="scenario-card" data-scenario="lead-capture">
+            <div class="scenario-icon">&#x1F3AF;</div>
+            <div class="scenario-name">잠재 고객 확보</div>
+            <div class="scenario-desc">관심 있는 방문자를 발견하고, 대화를 통해 연락처를 확보한 뒤 영업팀에 연결합니다.</div>
+            <div class="scenario-tags">
+              <span class="scenario-tag">세일즈 연결</span>
+              <span class="scenario-tag">리드 수집</span>
+              <span class="scenario-tag">미팅 전환</span>
+            </div>
+          </div>
+          <div class="scenario-card" data-scenario="purchase-conversion">
+            <div class="scenario-icon">&#x1F6D2;</div>
+            <div class="scenario-name">구매 전환 유도</div>
+            <div class="scenario-desc">방문자의 관심사를 파악하고, 맞춤 상품을 추천하여 구매까지 이어지게 합니다.</div>
+            <div class="scenario-tags">
+              <span class="scenario-tag">상품 추천</span>
+              <span class="scenario-tag">구매 유도</span>
+              <span class="scenario-tag">프로모션 안내</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="scenario-more">
+          <span>더 많은 시나리오가 준비 중입니다 (채용, 이벤트 등)</span>
+        </div>
+      </div>
+
+      <!-- Scenario detail setup -->
+      <div id="scenario-detail" class="setup-detail">
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+          <span class="back-link" id="btn-back">&#x2190; 시나리오 목록</span>
+          <span class="scenario-summary" id="selected-scenario-label"></span>
+        </div>
+
+        <div class="layout">
+          <div class="setup-area">
+
+            <!-- Campaign fields (dynamic) -->
+            <div class="card" id="campaign-card">
+              <div class="card-title" id="campaign-card-title"></div>
+
+              <!-- Lead Capture -->
+              <div id="campaign-lead-capture" class="campaign-content" style="display:none;">
+                <div class="section">
+                  <div class="section-header"><h3>우리가 찾는 고객</h3><span class="badge required">필수</span></div>
+                  <p class="section-desc">어떤 방문자를 잠재 고객으로 볼지 알려주세요</p>
+                  <textarea id="icp" rows="3" placeholder="예: 직원 50명 이상 패션/뷰티 쇼핑몰&#10;CS팀 리더 또는 운영 담당자&#10;CS 인력이 부족하거나 자동화를 고민 중인 회사"></textarea>
+                </div>
+                <div class="section">
+                  <div class="section-header"><h3>AI가 사용할 전략</h3></div>
+                  <p class="section-desc">각 전략에 필요한 자료를 넣어주세요. 비워두면 AI가 일반적인 방식으로 대화합니다.</p>
+                  <div class="strategy-list">
+                    <div class="strategy-item">
+                      <div class="strategy-name">가치 교환</div>
+                      <div class="strategy-desc">유용한 자료를 제공하고 연락처를 확보합니다</div>
+                      <div class="strategy-input-label">제공할 자료</div>
+                      <input type="text" id="strat-value-exchange" placeholder="예: B2B CS 자동화 가이드북 PDF, ROI 계산기">
+                      <div class="strategy-input-hint">백서, 체크리스트, 가이드 등 방문자에게 줄 수 있는 자료</div>
+                    </div>
+                    <div class="strategy-item">
+                      <div class="strategy-name">사례 소개</div>
+                      <div class="strategy-desc">비슷한 고객의 성공 사례로 신뢰를 얻습니다</div>
+                      <div class="strategy-input-label">고객 사례</div>
+                      <textarea id="strat-case-study" rows="2" placeholder="예: 패션몰 A사 — CS 응대 시간 60% 감소, 고객 만족도 35% 상승"></textarea>
+                      <div class="strategy-input-hint">업종, 규모, 도입 효과를 포함하면 좋습니다</div>
+                    </div>
+                    <div class="strategy-item">
+                      <div class="strategy-name">데모 제안</div>
+                      <div class="strategy-desc">관심 있는 방문자에게 데모나 미팅을 제안합니다</div>
+                      <div class="strategy-input-label">예약 방법</div>
+                      <input type="text" id="strat-demo" placeholder="예: https://calendly.com/styleon/demo">
+                      <div class="strategy-input-hint">캘린더 링크가 없으면 이메일로 안내합니다</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="section">
+                  <div class="section-header"><h3>이 시나리오 주의사항</h3><span class="badge optional">선택</span></div>
+                  <textarea id="campaign-overrides-leadgen" rows="2" placeholder="예: 가격은 언급하지 마세요"></textarea>
+                </div>
+              </div>
+
+              <!-- Purchase Conversion -->
+              <div id="campaign-purchase-conversion" class="campaign-content" style="display:none;">
+                <div class="section">
+                  <div class="section-header"><h3>추천 대상</h3><span class="badge required">필수</span></div>
+                  <p class="section-desc">어떤 방문자에게 상품을 추천할지 알려주세요</p>
+                  <textarea id="rec-target" rows="3" placeholder="예: 상품 페이지를 2개 이상 본 방문자&#10;장바구니에 담았지만 구매하지 않은 방문자"></textarea>
+                </div>
+                <div class="section">
+                  <div class="section-header"><h3>상품 정보</h3><span class="badge required">필수</span></div>
+                  <p class="section-desc">AI가 추천할 수 있도록 상품 정보를 알려주세요</p>
+                  <textarea id="rec-products" rows="4" placeholder="예: 카테고리: 아우터, 니트, 데님&#10;가격대: 5만원~15만원&#10;인기 상품: 오버핏 트렌치코트, 캐시미어 니트&#10;현재 프로모션: 봄 신상 20% 할인"></textarea>
+                </div>
+                <div class="section">
+                  <div class="section-header"><h3>AI가 사용할 전략</h3></div>
+                  <p class="section-desc">각 전략에 필요한 자료를 넣어주세요. 비워두면 AI가 일반적인 방식으로 추천합니다.</p>
+                  <div class="strategy-list">
+                    <div class="strategy-item">
+                      <div class="strategy-name">취향 파악 추천</div>
+                      <div class="strategy-desc">방문자의 취향을 물어보고 맞는 상품을 추천합니다</div>
+                      <div class="strategy-input-label">추천 기준</div>
+                      <textarea id="strat-taste" rows="2" placeholder="예: 스타일(캐주얼/포멀), 선호 색상, 예산 범위를 기반으로 추천"></textarea>
+                    </div>
+                    <div class="strategy-item">
+                      <div class="strategy-name">인기 상품 소개</div>
+                      <div class="strategy-desc">많이 팔리는 상품으로 관심을 유도합니다</div>
+                      <div class="strategy-input-label">베스트셀러</div>
+                      <textarea id="strat-bestseller" rows="2" placeholder="예: 1위 오버핏 트렌치코트 (3,200건 판매), 2위 캐시미어 니트 (2,800건)"></textarea>
+                    </div>
+                    <div class="strategy-item">
+                      <div class="strategy-name">프로모션 안내</div>
+                      <div class="strategy-desc">진행 중인 할인이나 이벤트를 알려줍니다</div>
+                      <div class="strategy-input-label">현재 프로모션</div>
+                      <input type="text" id="strat-promo" placeholder="예: 봄 신상 20% 할인, 3만원 이상 무료배송">
+                    </div>
+                  </div>
+                </div>
+                <div class="section">
+                  <div class="section-header"><h3>이 시나리오 주의사항</h3><span class="badge optional">선택</span></div>
+                  <textarea id="campaign-overrides-rec" rows="2" placeholder="예: 품절 상품은 추천하지 마세요"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Triggers -->
+            <div class="card">
+              <div class="card-title">트리거</div>
+              <p class="section-desc" style="margin-top:-12px; margin-bottom:16px;">AI가 언제 이 시나리오를 실행할지 설정하세요. 여러 트리거를 동시에 켤 수 있습니다.</p>
+              <div class="trigger-list" id="trigger-list"></div>
+            </div>
+
+            <div class="actions">
+              <button class="btn btn-primary" id="btn-test">대화 미리보기</button>
+              <button class="btn btn-secondary" id="btn-prompt">생성된 프롬프트 보기</button>
+            </div>
+          </div>
+
+          <!-- Preview Panel -->
+          <div class="preview-panel">
+            <div class="preview-header">
+              <h3>대화 미리보기</h3>
+              <span class="preview-status" id="preview-status">설정을 입력해주세요</span>
+            </div>
+            <div class="chat-area" id="chat-area">
+              <div class="chat-empty" id="chat-empty">
+                <div class="chat-empty-icon">&#x1F4AC;</div>
+                <p>시나리오를 설정하고<br>대화 미리보기를 눌러보세요</p>
+              </div>
+            </div>
+            <div class="preview-input">
+              <input type="text" id="user-input" placeholder="방문자로서 메시지를 입력해보세요..." disabled>
+              <button class="send-btn" id="btn-send" disabled>&#x2191;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prompt Modal -->
+  <div class="prompt-overlay" id="prompt-overlay">
+    <div class="prompt-modal">
+      <div class="prompt-modal-header">
+        <h3>AI에게 전달되는 프롬프트</h3>
+        <button class="close-btn" id="btn-close-modal">&times;</button>
+      </div>
+      <div class="prompt-modal-body">
+        <pre id="prompt-output"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const SCENARIOS = {
+      'lead-capture': {
+        name: '잠재 고객 확보', icon: '\u{1F3AF}',
+        goal: '잠재 고객을 찾아 연락처를 확보하고, 데모 미팅으로 연결합니다.',
+        states: 'VISITOR \u2192 ENGAGED \u2192 IDENTIFIED \u2192 ROLE_CHECK \u2192 LEAD_REGISTERED',
+        strategies: [
+          { id: 'value-exchange', name: '가치 교환', instruction: '유용한 자료를 제공하며 자연스럽게 연락처를 요청한다.' },
+          { id: 'case-study', name: '사례 소개', instruction: '방문자와 비슷한 고객의 성공 사례를 소개하며 신뢰를 쌓는다.' },
+          { id: 'demo', name: '데모 제안', instruction: '제품에 관심을 보이면 데모 미팅이나 상담을 제안한다.' }
+        ],
+        tools: ['send_message', 'find_company', 'save_lead', 'web_search'],
+        guardrails: { maxFatigue: 5, maxTurnsPerState: 8, timeout: '30m' },
+        triggers: [
+          { id: 'inbound', name: '문의 응대', desc: '방문자가 채팅으로 문의하면 AI가 대화를 시작합니다', hasFilter: true, filterLabel: '대상 문의 유형', filterPlaceholder: '예: 도입 상담, 가격 문의, 기능 질문\n비워두면 모든 문의에 대응합니다' },
+          { id: 'proactive', name: '먼저 말걸기', desc: '조건에 맞는 방문자에게 AI가 먼저 대화를 겁니다', hasFilter: true, filterLabel: '발동 조건', filterPlaceholder: '예: 가격 페이지를 30초 이상 본 방문자\n같은 페이지를 2회 이상 재방문한 방문자' }
+        ],
+        demo: {
+          ai: [
+            (k) => `안녕하세요! ${ex(k)}에 관심 가져주셔서 감사합니다. 혹시 현재 어떤 부분을 개선하고 싶으신지 여쭤봐도 될까요?`,
+            () => '알아보고 계시는군요! 혹시 어떤 회사에서 어떤 역할을 맡고 계신지 알 수 있을까요?',
+            () => { const c = q('#strat-case-study'); return c ? `비슷한 고객 사례가 있어요 \u2014 ${c.split('\n')[0]}. 데모를 보시겠어요?` : '비슷한 고객사에서 좋은 성과를 내고 있어요. 데모로 자세히 보여드릴까요?'; },
+            () => '감사합니다! 데모 일정을 안내드릴게요. 이번 주 편하신 시간이 있으세요?'
+          ],
+          user: ['네, CS 자동화 쪽 알아보고 있어요.', '패션 쇼핑몰이고, CS팀 리드입니다. 60명 규모요.', '좋아요, kim@fashionmall.com으로 보내주세요.']
+        },
+        completionLabel: '리드 등록 완료'
+      },
+      'purchase-conversion': {
+        name: '구매 전환 유도', icon: '\u{1F6D2}',
+        goal: '방문자의 취향과 니즈를 파악해 적합한 상품을 추천하고, 구매로 연결합니다.',
+        states: 'VISITOR \u2192 BROWSING \u2192 INTERESTED \u2192 RECOMMENDED \u2192 PURCHASE_INTENT',
+        strategies: [
+          { id: 'taste', name: '취향 파악 추천', instruction: '방문자의 스타일, 선호, 예산을 파악하여 맞춤 상품을 추천한다.' },
+          { id: 'bestseller', name: '인기 상품 소개', instruction: '가장 많이 팔리는 인기 상품을 소개하며 관심을 유도한다.' },
+          { id: 'promo', name: '프로모션 안내', instruction: '진행 중인 할인이나 이벤트를 안내하여 구매를 촉진한다.' }
+        ],
+        tools: ['send_message', 'show_product', 'apply_coupon', 'check_inventory'],
+        guardrails: { maxFatigue: 4, maxTurnsPerState: 6, timeout: '20m' },
+        triggers: [
+          { id: 'inbound', name: '문의 응대', desc: '방문자가 채팅으로 상품 문의를 하면 AI가 대화를 시작합니다', hasFilter: true, filterLabel: '대상 문의 유형', filterPlaceholder: '예: 상품 질문, 사이즈 문의, 배송 문의\n비워두면 모든 문의에 대응합니다' },
+          { id: 'proactive', name: '먼저 말걸기', desc: '조건에 맞는 방문자에게 AI가 먼저 대화를 겁니다', hasFilter: true, filterLabel: '발동 조건', filterPlaceholder: '예: 상품 페이지를 30초 이상 본 방문자\n같은 상품을 2회 이상 조회한 방문자' },
+          { id: 'cart-abandon', name: '장바구니 이탈 방지', desc: '장바구니에 담고 떠나려는 방문자에게 AI가 말을 겁니다', hasFilter: true, filterLabel: '발동 조건', filterPlaceholder: '예: 장바구니에 상품을 담은 후 1분 이상 결제하지 않은 방문자' }
+        ],
+        demo: {
+          ai: [
+            (k) => `안녕하세요! ${ex(k)}에 오신 걸 환영합니다. 찾고 계신 스타일이 있으세요?`,
+            () => '캐주얼 아우터를 찾으시는군요! 선호하시는 색상이나 예산대가 있으세요?',
+            () => { const b = q('#strat-bestseller'); const p = q('#strat-promo'); let m = '이런 상품은 어떠세요?'; if (b) m = `지금 가장 인기 있는 상품이에요 \u2014 ${b.split('\n')[0]}.`; if (p) m += ` ${p} 중이에요!`; return m; },
+            () => '좋은 선택이세요! 장바구니에 담아드릴까요?'
+          ],
+          user: ['캐주얼 아우터 찾고 있어요.', '블랙이나 네이비, 10만원 이하요.', '괜찮아 보여요, 자세히 볼 수 있나요?']
+        },
+        completionLabel: '구매 의향 확인'
+      }
+    };
+
+    function ex(k) { if (!k) return '저희 서비스'; const m = k.split('\n')[0].match(/^([^\uC740\uB294\uC774\uAC00\u2014\-]+)/); return m ? m[1].trim() : '저희 서비스'; }
+    function q(sel) { const el = document.querySelector(sel); return el ? el.value.trim() || null : null; }
+
+    let selectedScenario = null;
+    let accountSaved = false;
+    let conversationStep = 0;
+    let isConversationActive = false;
+
+    const knowledgeEl = document.getElementById('knowledge');
+    const chatArea = document.getElementById('chat-area');
+    const chatEmpty = document.getElementById('chat-empty');
+    const userInput = document.getElementById('user-input');
+    const btnSend = document.getElementById('btn-send');
+    const btnTest = document.getElementById('btn-test');
+    const btnPrompt = document.getElementById('btn-prompt');
+    const previewStatus = document.getElementById('preview-status');
+    const promptOverlay = document.getElementById('prompt-overlay');
+    const promptOutput = document.getElementById('prompt-output');
+    const triggerList = document.getElementById('trigger-list');
+    const scenarioSelect = document.getElementById('scenario-select');
+    const scenarioDetail = document.getElementById('scenario-detail');
+    const onboardingBanner = document.getElementById('onboarding-banner');
+    const toast = document.getElementById('toast');
+
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(`page-${tab.dataset.page}`).classList.add('active');
+      });
+    });
+
+    function navigateTo(page) {
+      document.querySelectorAll('.nav-tab').forEach(t => { t.classList.toggle('active', t.dataset.page === page); });
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(`page-${page}`).classList.add('active');
+    }
+
+    document.getElementById('go-to-account').addEventListener('click', () => navigateTo('account'));
+
+    document.getElementById('btn-save-account').addEventListener('click', () => {
+      const k = knowledgeEl.value.trim();
+      if (!k) { knowledgeEl.style.borderColor = '#ff3b30'; return; }
+      accountSaved = true;
+      onboardingBanner.classList.add('hidden');
+      showToast('회사 정보가 저장되었습니다');
+      navigateTo('scenarios');
+    });
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    document.querySelectorAll('.scenario-card').forEach(card => {
+      card.addEventListener('click', () => {
+        if (!accountSaved && !knowledgeEl.value.trim()) {
+          onboardingBanner.classList.remove('hidden');
+          onboardingBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          return;
+        }
+        selectedScenario = card.dataset.scenario;
+        openScenarioDetail();
+      });
+    });
+
+    function openScenarioDetail() {
+      const sc = SCENARIOS[selectedScenario];
+      scenarioSelect.style.display = 'none';
+      scenarioDetail.classList.add('active');
+      document.getElementById('selected-scenario-label').textContent = `${sc.icon} ${sc.name}`;
+      document.getElementById('campaign-card-title').textContent = sc.name;
+      document.querySelectorAll('.campaign-content').forEach(c => c.style.display = 'none');
+      document.getElementById(`campaign-${selectedScenario}`).style.display = 'block';
+      buildTriggers(sc.triggers);
+      resetConversation();
+    }
+
+    document.getElementById('btn-back').addEventListener('click', () => {
+      scenarioDetail.classList.remove('active');
+      scenarioSelect.style.display = '';
+      resetConversation();
+    });
+
+    function buildTriggers(triggers) {
+      triggerList.innerHTML = '';
+      triggers.forEach(t => {
+        const item = document.createElement('div');
+        item.className = 'trigger-item';
+        item.id = `trigger-${t.id}`;
+        item.innerHTML = `
+          <div class="trigger-top">
+            <div class="trigger-info">
+              <div class="trigger-name">${t.name}</div>
+              <div class="trigger-desc">${t.desc}</div>
+            </div>
+            <label class="toggle-switch trigger-toggle">
+              <input type="checkbox" id="switch-${t.id}">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="trigger-config" id="config-${t.id}">
+            ${t.hasFilter ? `
+              <div class="trigger-config-row">
+                <div class="trigger-config-label">${t.filterLabel}</div>
+                <textarea id="trigger-${t.id}-filter" rows="2" placeholder="${t.filterPlaceholder}"></textarea>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        triggerList.appendChild(item);
+        const sw = item.querySelector(`#switch-${t.id}`);
+        const config = item.querySelector(`#config-${t.id}`);
+        sw.addEventListener('change', () => {
+          config.classList.toggle('show', sw.checked);
+          item.classList.toggle('active', sw.checked);
+        });
+      });
+    }
+
+    function isSetupValid() {
+      const has = knowledgeEl.value.trim().length > 0;
+      if (selectedScenario === 'lead-capture') return has && q('#icp');
+      if (selectedScenario === 'purchase-conversion') return has && q('#rec-target') && q('#rec-products');
+      return has;
+    }
+
+    function updateStatus() {
+      if (isConversationActive) { previewStatus.textContent = '대화 중'; previewStatus.className = 'preview-status ready'; }
+      else if (isSetupValid()) { previewStatus.textContent = '준비 완료'; previewStatus.className = 'preview-status ready'; }
+      else { previewStatus.textContent = '설정을 입력해주세요'; previewStatus.className = 'preview-status'; }
+    }
+
+    document.addEventListener('input', (e) => {
+      if (e.target.matches('textarea, input[type="text"]')) {
+        e.target.style.borderColor = '#d2d2d7';
+        updateStatus();
+        if (e.target.id === 'knowledge' && e.target.value.trim()) {
+          accountSaved = true;
+          onboardingBanner.classList.add('hidden');
+        }
+      }
+    });
+
+    function generatePrompt() {
+      const sc = SCENARIOS[selectedScenario];
+      const knowledge = knowledgeEl.value.trim();
+      const globalOv = q('#global-overrides');
+      let p = `## 역할\n당신은 AI 마케팅 에이전트입니다.\n\n## 시나리오: ${sc.name}\n목표: ${sc.goal}\n상태 흐름: ${sc.states}\n\n## 우리 회사 정보\n${knowledge || '(미입력)'}`;
+      if (selectedScenario === 'lead-capture') {
+        p += `\n\n## 우리가 찾는 고객\n${q('#icp') || '(미입력)'}`;
+      } else if (selectedScenario === 'purchase-conversion') {
+        p += `\n\n## 추천 대상\n${q('#rec-target') || '(미입력)'}`;
+        p += `\n\n## 상품 정보\n${q('#rec-products') || '(미입력)'}`;
+      }
+      p += '\n\n## 활성 트리거';
+      let anyTrigger = false;
+      sc.triggers.forEach(t => {
+        const sw = document.getElementById(`switch-${t.id}`);
+        if (sw && sw.checked) {
+          anyTrigger = true;
+          const filter = document.getElementById(`trigger-${t.id}-filter`);
+          p += `\n\n### ${t.name}`;
+          if (filter && filter.value.trim()) p += `\n${t.filterLabel}: ${filter.value.trim()}`;
+        }
+      });
+      if (!anyTrigger) p += '\n(없음)';
+      p += '\n\n## 전략';
+      sc.strategies.forEach(s => {
+        const mat = q(`#strat-${s.id}`);
+        p += `\n\n### ${s.name}\n${s.instruction}`;
+        if (mat) p += `\n제공 자료: ${mat}`;
+      });
+      const campOv = selectedScenario === 'lead-capture' ? q('#campaign-overrides-leadgen') : q('#campaign-overrides-rec');
+      if (globalOv || campOv) { p += '\n\n## 주의사항'; if (globalOv) p += `\n[공통] ${globalOv}`; if (campOv) p += `\n[이 시나리오] ${campOv}`; }
+      p += `\n\n## 가드레일\n- 최대 피로도: ${sc.guardrails.maxFatigue}\n- 상태별 최대 턴: ${sc.guardrails.maxTurnsPerState}\n- 타임아웃: ${sc.guardrails.timeout}`;
+      p += `\n\n## 사용 가능한 도구\n${sc.tools.map(t => `- ${t}`).join('\n')}`;
+      p += '\n\n## 행동 규칙\n- 자연스럽고 친근하게 대화할 것\n- 정보를 한 번에 요구하지 말고 대화 흐름 속에서 수집할 것\n- 대상이 아닌 방문자에게는 정중하게 마무리할 것\n- 가드레일 한도를 항상 준수할 것';
+      return p;
+    }
+
+    function addMessage(sender, text) {
+      chatEmpty.style.display = 'none';
+      const d = document.createElement('div'); d.className = `chat-message ${sender}`;
+      const l = document.createElement('div'); l.className = 'sender'; l.textContent = sender === 'ai' ? 'AI 마케팅' : '방문자';
+      const b = document.createElement('div'); b.className = 'chat-bubble'; b.textContent = text;
+      d.appendChild(l); d.appendChild(b); chatArea.appendChild(d); chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function addBadge(text) {
+      const b = document.createElement('div'); b.className = 'state-badge'; b.textContent = text;
+      b.style.textAlign = 'center'; b.style.margin = '8px auto'; chatArea.appendChild(b);
+    }
+
+    function showTyping() {
+      const d = document.createElement('div'); d.className = 'chat-message ai'; d.id = 'typing-indicator';
+      const l = document.createElement('div'); l.className = 'sender'; l.textContent = 'AI 마케팅';
+      const b = document.createElement('div'); b.className = 'chat-bubble chat-typing'; b.innerHTML = '<span></span><span></span><span></span>';
+      d.appendChild(l); d.appendChild(b); chatArea.appendChild(d); chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function removeTyping() { const t = document.getElementById('typing-indicator'); if (t) t.remove(); }
+
+    function simulateAI(text) {
+      return new Promise(r => { showTyping(); setTimeout(() => { removeTyping(); addMessage('ai', text); r(); }, 800 + Math.random() * 1000); });
+    }
+
+    function resetConversation() {
+      isConversationActive = false;
+      conversationStep = 0;
+      chatArea.innerHTML = '';
+      chatEmpty.style.display = '';
+      chatArea.appendChild(chatEmpty);
+      userInput.disabled = true;
+      btnSend.disabled = true;
+      updateStatus();
+    }
+
+    async function startConversation() {
+      if (!isSetupValid()) {
+        if (!knowledgeEl.value.trim()) {
+          showToast('회사 정보를 먼저 입력해주세요');
+          navigateTo('account');
+          knowledgeEl.style.borderColor = '#ff3b30';
+          return;
+        }
+        if (selectedScenario === 'lead-capture') {
+          const e = document.getElementById('icp'); e.style.borderColor = e.value.trim() ? '#d2d2d7' : '#ff3b30';
+        } else if (selectedScenario === 'purchase-conversion') {
+          ['rec-target','rec-products'].forEach(id => { const e = document.getElementById(id); e.style.borderColor = e.value.trim() ? '#d2d2d7' : '#ff3b30'; });
+        }
+        return;
+      }
+      chatArea.innerHTML = ''; chatEmpty.style.display = 'none'; conversationStep = 0; isConversationActive = true;
+      userInput.disabled = false; btnSend.disabled = false; updateStatus();
+      const sc = SCENARIOS[selectedScenario]; const k = knowledgeEl.value.trim(); const states = sc.states.split(' \u2192 ');
+      addBadge(states[0]); await simulateAI(sc.demo.ai[0](k)); conversationStep = 1;
+    }
+
+    async function handleUserMessage() {
+      const text = userInput.value.trim(); if (!text || !isConversationActive) return;
+      addMessage('user', text); userInput.value = ''; userInput.disabled = true; btnSend.disabled = true;
+      const sc = SCENARIOS[selectedScenario]; const k = knowledgeEl.value.trim(); const states = sc.states.split(' \u2192 ');
+      if (conversationStep < sc.demo.ai.length) {
+        if (conversationStep < states.length) addBadge(states[conversationStep]);
+        await simulateAI(sc.demo.ai[conversationStep](k)); conversationStep++;
+      }
+      if (conversationStep >= sc.demo.ai.length) {
+        addBadge(states[states.length - 1]); isConversationActive = false; updateStatus();
+        previewStatus.textContent = sc.completionLabel; return;
+      }
+      userInput.disabled = false; btnSend.disabled = false; userInput.focus();
+    }
+
+    btnTest.addEventListener('click', startConversation);
+    btnSend.addEventListener('click', handleUserMessage);
+    userInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) handleUserMessage(); });
+    btnPrompt.addEventListener('click', () => { promptOutput.textContent = generatePrompt(); promptOverlay.classList.add('show'); });
+    document.getElementById('btn-close-modal').addEventListener('click', () => promptOverlay.classList.remove('show'));
+    promptOverlay.addEventListener('click', e => { if (e.target === promptOverlay) promptOverlay.classList.remove('show'); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') promptOverlay.classList.remove('show'); });
+  </script>
+</body>
+</html>
